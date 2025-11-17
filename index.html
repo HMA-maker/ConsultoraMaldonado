@@ -1,1 +1,437 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Informe Financiero — Bolivia & Mercados</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#ffffff; --muted:#6b7280; --accent:#0b63c6;
+    --radius:12px; --maxw:1100px;
+  }
+  body{
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background:var(--bg); color:#0b1221; margin:20px; display:flex; justify-content:center;
+  }
+  .container{width:100%; max-width:var(--maxw); margin:20px;}
+  header{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px;}
+  h1{font-size:1.6rem; margin:0;}
+  .meta{color:var(--muted); font-size:0.95rem;}
+  .card{background:var(--card); border-radius:var(--radius); padding:18px; box-shadow:0 6px 18px rgba(11,18,33,0.05); margin-bottom:18px;}
+  .grid{display:grid; grid-template-columns: 1fr 420px; gap:18px;}
+  .full{grid-column:1/-1;}
+  table{width:100%; border-collapse:collapse; margin-top:12px; font-size:0.95rem;}
+  th, td{padding:10px 8px; border-bottom:1px solid #eef2f7; text-align:left;}
+  th{background:#fbfdff; color:#0b2340; font-weight:600;}
+  .small{font-size:0.88rem; color:var(--muted);}
+  .kpi{display:flex; gap:12px; flex-wrap:wrap;}
+  .kpi .item{background:#f8fbff; padding:10px 12px; border-radius:10px; min-width:160px;}
+  .chart-box{height:320px;}
+  .buttons{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+  button{background:var(--accent); color:white; border:none; padding:8px 10px; border-radius:8px; cursor:pointer;}
+  button.secondary{background:#e6eefc; color:var(--accent);}
+  .ref p{margin:.35rem 0; font-size:0.9rem;}
+  footer.small{font-size:0.85rem; color:var(--muted); margin-top:10px;}
+  .notice{background:#fff7ed; border-left:4px solid #f59e0b; padding:10px; border-radius:8px; margin-top:12px;}
+  @media (max-width:980px){ .grid{grid-template-columns:1fr;} .chart-box{height:260px} }
+</style>
+</head>
+<body>
+  <div class="container" role="main">
+    <header>
+      <div>
+        <h1>Informe Financiero — Bolivia, Bank of America y Activos</h1>
+        <div class="meta">Snapshot dinámico — datos traídos desde APIs públicas cuando están disponibles</div>
+      </div>
+      <div class="small">Generado: <span id="generatedDate"></span></div>
+    </header>
+
+    <!-- DISCLAIMER -->
+    <div class="card notice">
+      <strong>Disclaimer:</strong> Esta información es meramente informativa y no constituye asesoría financiera.
+    </div>
+	<div class="card notice">
+		<strong>Nuevo: </strong> Revise nuestra nueva opción en el MENU acerca de la Cotización del Dólar Paralelo (DOLAR BLUE)
+	</div>
+    <!-- GRID -->
+    <div class="grid" aria-live="polite">
+      <!-- Left column: textual research -->
+      <section class="card">
+        <h2>1. Investigación textual (resumen)</h2>
+        <p class="small">A continuación se muestran los indicadores principales para Bolivia, resumen de índices de Bank of America y snapshot de activos. Las cifras en tablas se actualizan automáticamente (si la fuente lo permite).</p>
+
+        <h3>Indicadores — Bolivia</h3>
+        <div class="kpi" id="kpisBolivia">
+          <div class="item"><strong>RIN</strong><div id="rinVal">Cargando...</div><div class="small">Reservas Internacionales Netas</div></div>
+          <div class="item"><strong>M2</strong><div id="m2Val">Ver series</div><div class="small">Agregado monetario (últimos meses)</div></div>
+          <div class="item"><strong>Liquidez</strong><div id="liqVal">Ver informe</div><div class="small">Indicadores del sistema financiero</div></div>
+        </div>
+
+        <table aria-label="Indicadores Bolivia">
+          <thead><tr><th>Indicador</th><th>Último dato</th><th>Fuente</th></tr></thead>
+          <tbody>
+            <tr><td>Reservas Internacionales Netas (RIN)</td><td id="rinTable">—</td><td>Banco Central de Bolivia</td></tr>
+            <tr><td>M2 (agregado monetario)</td><td id="m2Table">—</td><td>Banco Central de Bolivia</td></tr>
+            <tr><td>Índice de liquidez (sist. financiero)</td><td id="liqTable">—</td><td>Informe de Estabilidad Financiera - BCB</td></tr>
+            <tr><td>Volumen cambiario (USD)</td><td id="volTable">—</td><td>BCB - sección cotizaciones</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin-top:14px;">Bank of America — índices</h3>
+        <table aria-label="Indicadores BofA">
+          <thead><tr><th>Indicador</th><th>Valor / Observación</th><th>Fuente</th></tr></thead>
+          <tbody>
+            <tr><td>Global Financial Stress Index (GFSI)</td><td id="gfsVal">Descripción</td><td>Bank of America</td></tr>
+            <tr><td>ICE BofA MOVE Index</td><td id="moveVal">—</td><td>ICE / BofA</td></tr>
+            <tr><td>M2 (EE.UU.)</td><td id="m2us">Serie FRED</td><td>Federal Reserve (FRED)</td></tr>
+          </tbody>
+        </table>
+
+        <p class="small" style="margin-top:10px;">Nota: para series históricas (M2 Bolivia, M2 EE. UU.), el informe incluye funciones para descargar CSV si provees la URL pública del CSV o una API key para FRED/BCB.</p>
+      </section>
+
+      <!-- Right column: charts + controls -->
+      <aside class="card" aria-label="Panel de control">
+        <h2>2. Gráficos & Controles</h2>
+        
+		<h3 style="margin-top:18px;">M2 Bolivia — serie (ejemplo)</h3>
+        
+		<div class="chart-box"><canvas id="chartM2" aria-label="Gráfico M2 Bolivia"></canvas></div>
+        
+		<label class="small">Selecciona activos a mostrar:</label>
+        <div style="margin-top:8px;">
+          <input type="checkbox" id="chkBTC" checked/> <label for="chkBTC">BTC</label><br/>
+          <input type="checkbox" id="chkETH" checked/> <label for="chkETH">ETH</label><br/>
+          <input type="checkbox" id="chkBNB" checked/> <label for="chkBNB">BNB</label><br/>
+          <input type="checkbox" id="chkXAU" checked/> <label for="chkXAU">Gold (XAU)</label><br/>
+          <input type="checkbox" id="chkTSLA" checked/> <label for="chkTSLA">TSLA</label><br/>
+          <input type="checkbox" id="chkFTNT" checked/> <label for="chkFTNT">FTNT</label><br/>
+        </div>
+
+        <div class="buttons">
+          <button id="btnRefresh">Actualizar datos</button>
+          <button class="secondary" id="btnExport">Exportar tabla (CSV)</button>
+        </div>
+
+        <div style="margin-top:14px;">
+          <div class="chart-box"><canvas id="chartAssets" aria-label="Gráfico de precios de activos"></canvas></div>
+        </div>
+      </aside>
+
+      <!-- Full width: asset table & M2 chart -->
+      <section class="card full">
+        <h2>3. Activos financieros — snapshot</h2>
+        <p class="small">Precios y cambios (si la fuente responde). Los precios en cripto provienen de CoinGecko; acciones se consultan por Yahoo Finance (endpoint público) como primer intento — si fallan, uso valores de respaldo.</p>
+
+        <table id="assetsTable" aria-label="Tabla de activos">
+          <thead><tr><th>Activo</th><th>Precio (USD)</th><th>24h</th><th>7d</th><th>Volumen 24h</th><th>Fuente</th></tr></thead>
+          <tbody>
+            <!-- dinámico -->
+          </tbody>
+        </table>
+      </section>
+
+      <!-- References -->
+      <section class="card full ref" id="references">
+        <h2>Referencias:</h2>
+        <p>Banco Central de Bolivia. (2025). <em>Las reservas internacionales netas crecen y superan los US$2.881 millones</em> [Comunicado]. Banco Central de Bolivia.</p>
+        <p>Banco Central de Bolivia. (2024–2025). <em>Informe de Política Monetaria, Memoria institucional y estadísticas monetarias</em>. Banco Central de Bolivia.</p>
+        <p>Banco Central de Bolivia. (2025). <em>Informe de Estabilidad Financiera (IEF)</em>. Banco Central de Bolivia.</p>
+        <p>Federal Reserve Bank of St. Louis. (2025). <em>M2 Money Stock (M2SL, WM2NS)</em>. https://fred.stlouisfed.org</p>
+        <p>ICE Data Indices. (2025). <em>ICE BofA MOVE Index</em>. Intercontinental Exchange.</p>
+        <p>Bank of America. (2025). <em>Global Financial Stress Index (GFSI)</em>. Bank of America Research.</p>
+        <p>CoinGecko. (2025). <em>Cryptocurrency market data</em>. https://www.coingecko.com</p>
+        <p>CoinMarketCap. (2025). <em>Crypto market data</em>. https://coinmarketcap.com</p>
+        <p>GoldPrice.org / metals.live / Investing.com. (2025). <em>Gold spot price</em>.</p>
+        <p>Yahoo Finance / NASDAQ. (2025). <em>Market quotes for TSLA and FTNT</em>. https://finance.yahoo.com</p>
+      </section>
+	  
+    </div> <!-- /grid -->
+
+  </div> <!-- /container -->
+
+<script>
+
+// Esta página solicita datos en tiempo real desde APIs públicas. Para uso en
+//producción considere alojar un backend que agregue datos y gestione claves y CORS.
+
+// -------------------------
+// Configuraciones (editar si necesitas usar API keys o proxys)
+// -------------------------
+const CONFIG = {
+  // CoinGecko (no key)
+  coingecko: {
+    coins: ['bitcoin','ethereum','binancecoin'], // ids usados por CoinGecko
+    vs_currency: 'usd'
+  },
+
+  // Gold/Metals - endpoint público (metals.live example)
+  metals: {
+    // metals.live public endpoint: https://api.metals.live/v1/spot
+    endpoint: 'https://api.metals.live/v1/spot'
+  },
+
+  // Stocks - primer intento: Yahoo Finance unofficial endpoint
+  // Si falla por CORS, puedes configurar un proxy backend o usar una API con key (AlphaVantage, FMP)
+  stocks: {
+    symbols: ['TSLA','FTNT'],
+    yahoo: 'https://query1.finance.yahoo.com/v7/finance/quote?symbols='
+  },
+
+  // Backup static values (en caso de fallo)
+  fallback: {
+    BTC: {price:94000, change24h: -0.6, change7d:-9, vol24h: 18000000000},
+    ETH: {price:3120, change24h: 0.8, change7d:-10, vol24h: 1000000000},
+    BNB: {price:920, change24h:-0.2, change7d:-6, vol24h: 200000000},
+    XAU: {price:4080, change24h:-2, change7d: 55},
+    TSLA: {price:405, change24h:0.6, change7d:-7, vol24h: 20000000},
+    FTNT: {price:82, change24h:1.5, change7d:-10, vol24h: 3000000},
+    RIN: 'US$ 2.881 millones (31-ago-2025)'
+  }
+};
+
+// -------------------------
+// Utilidades
+// -------------------------
+function formatUSD(n){
+  if (n === null || n === undefined) return '—';
+  if (Math.abs(n) >= 1000) return '$' + (Math.round(n)).toLocaleString();
+  return '$' + Number(n).toLocaleString(undefined, {maximumFractionDigits:2});
+}
+function formatPct(n){
+  if (n === null || n === undefined) return '—';
+  return (n>0?'+':'') + Number(n).toFixed(2) + '%';
+}
+function isoNow(){ return new Date().toLocaleString(); }
+
+// -------------------------
+// DOM inicial
+// -------------------------
+document.getElementById('generatedDate').textContent = isoNow();
+
+// -------------------------
+// Fetch: CoinGecko (cripto)
+// -------------------------
+async function fetchCryptos(){
+  try{
+    const ids = CONFIG.coingecko.coins.join(',');
+    const vs = CONFIG.coingecko.vs_currency;
+    const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${vs}&ids=${ids}&price_change_percentage=24h,7d&order=market_cap_desc&per_page=100&page=1&sparkline=false`;
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error('CoinGecko no respondió '+resp.status);
+    const data = await resp.json();
+    // Map to object by symbol-like key
+    const map = {};
+    (data||[]).forEach(c => {
+      const sym = c.symbol ? c.symbol.toUpperCase() : c.id.toUpperCase();
+      map[sym] = {
+        price: c.current_price,
+        change24h: c.price_change_percentage_24h,
+        change7d: c.price_change_percentage_7d_in_currency ?? null,
+        vol24h: c.total_volume,
+        source: 'CoinGecko'
+      };
+    });
+    return map;
+  }catch(e){
+    console.warn('fetchCryptos error', e);
+    // fallback values
+    return {
+      'BTC': {...CONFIG.fallback.BTC, source:'fallback'},
+      'ETH': {...CONFIG.fallback.ETH, source:'fallback'},
+      'BNB': {...CONFIG.fallback.BNB, source:'fallback'}
+    };
+  }
+}
+
+// -------------------------
+// Fetch: Metals (gold) via metals.live public endpoint
+// -------------------------
+async function fetchGold(){
+  try{
+    const resp = await fetch(CONFIG.metals.endpoint);
+    if(!resp.ok) throw new Error('metals.live no respondió');
+    const data = await resp.json(); // expected: array of {metal, price}
+    // metals.live returns entries like {metal: 'gold', price: 1975.30, currency:'USD'}
+    const goldEntry = (data||[]).find(it => (it.metal||'').toLowerCase().includes('gold') || (it.metal||'').toLowerCase().includes('xau'));
+    if(goldEntry) return { price: goldEntry.price, change24h: null, source: 'metals.live' };
+    // fallback: try GoldPrice.org scraping not possible client-side; return fallback
+    return { price: CONFIG.fallback.XAU.price, change24h: CONFIG.fallback.XAU.change24h, source:'fallback' };
+  }catch(e){
+    console.warn('fetchGold error', e);
+    return { price: CONFIG.fallback.XAU.price, change24h: CONFIG.fallback.XAU.change24h, source:'fallback' };
+  }
+}
+
+// -------------------------
+// Fetch: Stocks via Yahoo Finance public endpoint (primer intento)
+// -------------------------
+async function fetchStocks(){
+  const symbols = CONFIG.stocks.symbols.join(',');
+  const url = CONFIG.stocks.yahoo + symbols;
+  try{
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error('Yahoo no respondió: ' + resp.status);
+    const json = await resp.json();
+    const results = {};
+    const quotes = json.quoteResponse && json.quoteResponse.result ? json.quoteResponse.result : [];
+    quotes.forEach(q => {
+      const sym = q.symbol;
+      results[sym] = {
+        price: q.regularMarketPrice ?? q.ask ?? q.bid ?? null,
+        change24h: q.regularMarketChangePercent ?? null,
+        change7d: null,
+        vol24h: q.regularMarketVolume ?? null,
+        source: 'Yahoo'
+      };
+    });
+    // Fill any missing with fallback
+    CONFIG.stocks.symbols.forEach(s => { if(!results[s]) results[s] = {...CONFIG.fallback[s], source:'fallback'}; });
+    return results;
+  }catch(e){
+    console.warn('fetchStocks error', e);
+    // fallback static
+    const out = {};
+    CONFIG.stocks.symbols.forEach(s => out[s] = {...(CONFIG.fallback[s] || {price:'—', change24h:null}), source:'fallback'});
+    return out;
+  }
+}
+
+// -------------------------
+// Populate tables & charts
+// -------------------------
+let chartAssets = null;
+let chartM2 = null;
+
+async function updateAll(){
+  // UI: loading
+  document.querySelectorAll('#assetsTable tbody')[0].innerHTML = '<tr><td colspan="6" class="small">Obteniendo datos...</td></tr>';
+
+  // Parallel fetches
+  const [cryptos, gold, stocks] = await Promise.all([
+    fetchCryptos(),
+    fetchGold(),
+    fetchStocks()
+  ]);
+
+  // Construct assets array (respecting user-selected checkboxes)
+  const assets = [];
+  if(document.getElementById('chkBTC').checked){
+    const c = cryptos['BTC'] || cryptos['BTC'] || CONFIG.fallback.BTC;
+    assets.push({name:'Bitcoin (BTC)', key:'BTC', price:c.price, ch24:c.change24h, ch7:c.change7d, vol:c.vol24h, source:c.source || 'CoinGecko'});
+  }
+  if(document.getElementById('chkETH').checked){
+    const c = cryptos['ETH'] || CONFIG.fallback.ETH;
+    assets.push({name:'Ethereum (ETH)', key:'ETH', price:c.price, ch24:c.change24h, ch7:c.change7d, vol:c.vol24h, source:c.source || 'CoinGecko'});
+  }
+  if(document.getElementById('chkBNB').checked){
+    const c = cryptos['BNB'] || CONFIG.fallback.BNB;
+    assets.push({name:'BNB', key:'BNB', price:c.price, ch24:c.change24h, ch7:c.change7d, vol:c.vol24h, source:c.source || 'CoinGecko'});
+  }
+  if(document.getElementById('chkXAU').checked){
+    assets.push({name:'Gold (XAU / oz)', key:'XAU', price:gold.price, ch24:gold.change24h, ch7:null, vol:null, source:gold.source});
+  }
+  if(document.getElementById('chkTSLA').checked){
+    const s = stocks['TSLA'] || CONFIG.fallback.TSLA;
+    assets.push({name:'Tesla (TSLA)', key:'TSLA', price:s.price, ch24:s.change24h, ch7:s.change7d, vol:s.vol24h, source:s.source});
+  }
+  if(document.getElementById('chkFTNT').checked){
+    const s = stocks['FTNT'] || CONFIG.fallback.FTNT;
+    assets.push({name:'Fortinet (FTNT)', key:'FTNT', price:s.price, ch24:s.change24h, ch7:s.change7d, vol:s.vol24h, source:s.source});
+  }
+
+  // Fill asset table
+  const tbody = document.querySelector('#assetsTable tbody');
+  tbody.innerHTML = '';
+  assets.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${a.name}</td>
+      <td>${a.price!==null? formatUSD(a.price) : '—'}</td>
+      <td>${a.ch24!==null? formatPct(a.ch24) : '—'}</td>
+      <td>${a.ch7!==null? formatPct(a.ch7) : '—'}</td>
+      <td>${a.vol? (typeof a.vol === 'number' ? ('$'+Number(a.vol).toLocaleString()) : a.vol) : '—'}</td>
+      <td class="small">${a.source}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Update small KPI area for Bolivia (we don't fetch BCB automatically here; show fallback)
+  document.getElementById('rinVal').textContent = CONFIG.fallback.RIN;
+  document.getElementById('m2Val').textContent = 'Serie disponible en BCB (ver referencias)';
+  document.getElementById('liqVal').textContent = 'Consultar IEF - BCB';
+
+  document.getElementById('rinTable').textContent = CONFIG.fallback.RIN;
+  document.getElementById('m2Table').textContent = 'Serie 2024–2025 (BCB)';
+  document.getElementById('liqTable').textContent = 'Último IEF (BCB)';
+  document.getElementById('volTable').textContent = 'Consultar BCB (operaciones)';
+
+  // Update BofA fields (we don't fetch GFSI automatically)
+  document.getElementById('gfsVal').textContent = 'Global Financial Stress Index (ver publicaciones BofA)';
+  document.getElementById('moveVal').textContent = 'Consulte ICE / proveedores de datos';
+  document.getElementById('m2us').textContent = 'FRED (M2 series)';
+
+  // Render asset chart
+  const labels = assets.map(a => a.key);
+  const dataVals = assets.map(a => (a.price===null? 0 : Number(a.price)));
+  const bgColors = labels.map((l,i)=>`rgba(${40+40*i},${120-8*i},${200-18*i},0.8)`);
+
+  if(chartAssets) chartAssets.destroy();
+  const ctx = document.getElementById('chartAssets').getContext('2d');
+  chartAssets = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{ label:'Precio (USD)', data: dataVals, backgroundColor: bgColors }]
+    },
+    options: {
+      plugins: { legend:{display:false}, tooltip:{callbacks:{label: ctx => formatUSD(ctx.parsed.y)}} },
+      scales: { y: { beginAtZero:true } }
+    }
+  });
+
+  // M2 Bolivia chart - demo with sample data (replace with actual CSV fetch if you have URL)
+  const sampleLabels = ['2024-01','2024-04','2024-07','2024-10','2025-01','2025-04','2025-07'];
+  const sampleM2 = [98000, 100200, 102500, 105000, 108000, 109500, 111000];
+  if(chartM2) chartM2.destroy();
+  const ctx2 = document.getElementById('chartM2').getContext('2d');
+  chartM2 = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: sampleLabels,
+      datasets: [{ label:'M2 Bolivia (ejemplo en millones de Bs)', data: sampleM2, borderWidth:2, tension:0.25 }]
+    },
+    options: { plugins:{legend:{display:true}} }
+  });
+}
+
+// -------------------------
+// Event handlers
+// -------------------------
+document.getElementById('btnRefresh').addEventListener('click', () => {
+  updateAll();
+});
+
+document.getElementById('btnExport').addEventListener('click', () => {
+  // Export assets table to CSV
+  const rows = [['Activo','Precio (USD)','24h','7d','Volumen 24h','Fuente']];
+  document.querySelectorAll('#assetsTable tbody tr').forEach(tr=>{
+    const cols = Array.from(tr.children).map(td => td.textContent.trim());
+    rows.push(cols);
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `assets_snapshot_${(new Date()).toISOString().slice(0,10)}.csv`; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Auto initial update
+updateAll();
+
+</script>
+</body>
+</html>
 
